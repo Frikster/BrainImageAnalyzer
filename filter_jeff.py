@@ -6,7 +6,7 @@ from scipy import ndimage
 #from joblib import Parallel, delayed  
 #import multiprocessing
 import parmap
-import image_registration
+#import image_registration
 
 #M1312000377_1438367187.563086.raw
 #processed_data/Concatenated Stacks.raw
