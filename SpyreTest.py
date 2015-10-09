@@ -24,7 +24,7 @@ import displacement_jeff as dj
 
 starting_frame = 100
 
-class ImageEditor(server.App):
+class SpyreTest(server.App):
 
     title = "Brain Image Analyzer"
     inputs = [{	"type": "text",
@@ -67,8 +67,8 @@ class ImageEditor(server.App):
 		return image
 
 if __name__ == '__main__':
-	app = ImageEditor()
-	app.launch(port=9096)
+	app = SpyreTest()
+	app.launch(host='0.0.0.0', port=int(os.environ.get('PORT', '5000')))
 
 
 
