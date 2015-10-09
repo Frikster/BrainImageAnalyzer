@@ -8,19 +8,19 @@
 # tested with python2.7 and 3.4
 from spyre import server
 
-from scipy import signal
-import skimage
-from skimage import data, filter, io
-from scipy.stats.stats import pearsonr
-from scipy import ndimage
+#from scipy import signal
+#import skimage
+#from skimage import data, filter, io
+#from scipy.stats.stats import pearsonr
+#from scipy import ndimage
 
 import filter_jeff as fj
-import jeffs_functions as jf
-import shutil
+#import jeffs_functions as jf
+#import shutil
 import os
-import glob
-import numpy as np
-import displacement_jeff as dj
+#import glob
+#import numpy as np
+#import displacement_jeff as dj
 
 starting_frame = 100
 
