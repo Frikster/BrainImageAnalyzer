@@ -22,94 +22,21 @@ import os
 #import glob
 #import numpy as np
 
-starting_frame = 100
 width = 256
 height = 256
+frame_ref= 400
+frame_rate = 30.
+f_low=[.1,.3]
+f_high=[1.,3.]
 
 class SpyreTest(server.App):
 
     title = "Brain Image Analyzer"
     inputs = [ # Raw file inputs (20 max)
 			  {"type": "text",
-					"key": "raw_file1",
-					"label": "Raw File Locations (max 20) Leave blank the ones you dont use",
-					"value": "/media/cornelis/DataCDH/Raw-data/Test Data/0910/EL_noled/Videos/M1302000245_1441918072.809071.raw"
-			  },
-			  {	"type": "text",
-					"key": "raw_file2",
-					"value": ""
-			  },
-			  {	"type": "text",
-					"key": "raw_file3",
-					"value": ""
-			  },
-			  {	"type": "text",
-					"key": "raw_file4",
-					"value": ""
-			  },
-			  {	"type": "text",
-					"key": "raw_file5",
-					"value": ""
-			  },
-			  {	"type": "text",
-					"key": "raw_file6",
-					"value": ""
-			  },
-			  {	"type": "text",
-					"key": "raw_file7",
-					"value": ""
-		 	  },
-			  {	"type": "text",
-					"key": "raw_file8",
-					"value": ""
-			  },
-			  {	"type": "text",
-					"key": "raw_file9",
-					"value": ""
-			  },
-			  {	"type": "text",
-					"key": "raw_file10",
-					"value": ""
-			  },
-			  {	"type": "text",
-					"key": "raw_file11",
-					"value": ""
-			  },
-			  {	"type": "text",
-					"key": "raw_file12",
-					"value": ""
-			  },
-			  {	"type": "text",
-					"key": "raw_file13",
-					"value": ""
-			  },
-			  {	"type": "text",
-					"key": "raw_file14",
-					"value": ""
-			  },
-			  {	"type": "text",
-					"key": "raw_file15",
-					"value": ""
-			  },
-			  {	"type": "text",
-					"key": "raw_file16",
-					"value": ""
-			  },
-			  {	"type": "text",
-					"key": "raw_file17",
-					"value": "",
-			  },
-			  {	"type": "text",
-					"key": "raw_file18",
-					"value": "",
-			  },
-			  {	"type": "text",
-					"key": "raw_file19",
-					"value": "",
-			  },
-			  {	"type": "text",
-					"key": "raw_file20",
-					"value": "",
+					"key": "raw_file_folder",
+					"label": "Enter path to folder containing all raw files to be analyzed",
+					"value": "/media/cornelis/DataCDH/Raw-data/Test Data/0910/EL_noled/Videos/"
 			  },
 			  # GSR Checkbox
 			  {	"type": "checkboxgroup",
@@ -136,7 +63,6 @@ class SpyreTest(server.App):
 				"label": "y",
 				"value": ""}]
 
-
     controls = [{"type":"button",
 				 "id":"render_button",
 				 "label":"Pray it works"}]
@@ -151,25 +77,47 @@ class SpyreTest(server.App):
     #  			"label":"render"}]
 
     def getImage(self,params):
-		print(params.keys())
+		raw_file_folder = params['raw_file_folder']
+		lof=[]
+		for root, dirs, files in os.walk(raw_file_folder):
+			for file in files:
+				if (file.endswith(".raw") or file.endswith(".g") ):
+					lof.append((os.path.join(root, file)))
 
-		raw_file_keys=filter(lambda x:'raw_file' in x,params.keys())
-		raw_files=[params[i] for i in raw_file_keys if params[i]!='']
-
-		if len(raw_files > 1):
+		if len(lof > 1):
 			print "Doing alignments..."
-			for m in the_mice:
-				lof, lofilenames=dj.get_file_list(green_dir, m)
-				print(lof)
-				lp=dj.get_distance_var(lof,width,height,frame_ref)
-				for i in range(len(lp)):
-					print('Working on this file: ')+str(lof[i])
-					#tmp_lof=[]
-					#tmp_lof.append(lof[i])
-					#print('creating 1 element list')
-					#print(type(tmp_lof))
-					frames=dj.get_green_frames(str(lof[i]),width,height)
-					frames=dj.shift_frames(frames,lp[i])
+			aligned_frames = []
+			lp=dj.get_distance_var(lof,width,height,frame_ref)
+			for i in range(len(lp)):
+				print('Working on this file: ')+str(lof[i])
+				frames=dj.get_green_frames(str(lof[i]),width,height)
+				frames_aligned=dj.shift_frames(frames,lp[i])
+				aligned_frames.append(frames_aligned)
+		else:
+			frames=dj.get_green_frames(str(lof[0]),width,height)
+
+		#Do temporal filters, apply and calculate dff
+		#each filter band
+
+
+
+		chebyfied_frames = []
+		for i in range(len(f_low)):
+			for frames in aligned_frames:
+				avg_frames=fj.calculate_avg(frames)
+				frames=fj.cheby_filter(frames, f_low[i], f_high[i], frame_rate)
+				frames+=avg_frames
+				frames=fj.calculate_df_f0(frames)
+				#do gsr
+				if params['gsr_check']:
+					frames=fj.gsr(frames,width,height)
+
+
+
+
+
+
+
 
 
 		raw_file = (params['raw_file1'])
