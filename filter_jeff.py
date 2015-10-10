@@ -18,8 +18,8 @@ import parmap
 
 #save_dir = "/media/user/DataFB/AutoHeadFix_Data/0731/EL_LRL/"
 
-#width = 256
-#height = 256
+width = 256
+height = 256
 #frame_rate = 30.0
 #frame_size = width * height * 3
 

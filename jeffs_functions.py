@@ -21,7 +21,6 @@ def check_dirs(base_path_data,base_path_analysis):
 
     data_dirs=next(os.walk(base_path_data))[1]
     analysis_dirs=next(os.walk(base_path_analysis))[1]
-    
 
     to_analyze=[]
     for d in data_dirs:
