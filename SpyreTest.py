@@ -112,19 +112,19 @@ class SpyreTest(server.App):
     #  			"label":"render"}]
 
     def getImage(self,params):
+		choose_map = params['choose_map']
+
+		if choose_map == 'spc_map':
+			x = float(params['x'])
+			y = float(params['y'])
 		f_low = float(params['f_low'])
 		f_high = float(params['f_high'])
 		frame_ref = float(params['frame_ref'])
 		raw_file_folder = params['raw_file_folder']
 		raw_filename_to_align = params['raw_file_to_align']
-		x = float(params['x'])
-		y = float(params['y'])
-		choose_map = params['choose_map']
 
-		try:
-			preprocessed_frames
-		except NameError:
 
+		if 'preprocessed_frames' not in globals():
 			# The first file added to lof is raw_file_to_align
 			lof=[]
 			for root, dirs, files in os.walk(raw_file_folder):
@@ -136,6 +136,15 @@ class SpyreTest(server.App):
 					if (file.endswith(".raw") or file.endswith(".g") and (os.path.join(root, file)) not in lof):
 						lof.append((os.path.join(root, file)))
 
+			# Uncomment to check result immdediately after import
+			# frames=dj.get_green_frames(str(lof[1]),width,height)
+			# return(frames[0])
+
+			# CorrelationMapDisplayer = fj.CorrelationMapDisplayer(frames)
+			# image = CorrelationMapDisplayer.get_correlation_map(x, y, frames)
+			#return(frames[0])
+			#print("Well Fuck")
+
 			# First element in aligned_frames_list is all frames aligned to user selected raw
 			if len(lof) > 1:
 				print "Doing alignments..."
@@ -144,16 +153,26 @@ class SpyreTest(server.App):
 				if 'all_aligns' in params['all_alignments_check']:
 					for i in range(len(lp)):
 						print('Working on this file: ')+str(lof[i])
-						frames=dj.get_green_frames(str(lof[i]),width,height)
+						# TODO: Figure out which get_frames to use
+						frames=fj.get_frames(str(lof[i]),width,height)
 						frames_aligned=dj.shift_frames(frames,lp[i])
 						aligned_frames_list.append(frames_aligned)
 				else:
 					print('Working on this file: ')+str(lof[0])
-					frames=dj.get_green_frames(str(lof[0]),width,height)
+					frames=dj.get_frames(str(lof[0]),width,height)
 					frames_aligned=dj.shift_frames(frames,lp[0])
 					aligned_frames_list.append(frames_aligned)
 			else:
-				aligned_frames_list=[dj.get_green_frames(str(lof[0]),width,height)]
+				aligned_frames_list=[dj.get_frames(str(lof[0]),width,height)]
+
+			# Uncomment to check result immdediately after alignment
+			#print('MADE IT')
+			#return(aligned_frames_list[0][0])
+
+			# CorrelationMapDisplayer = fj.CorrelationMapDisplayer(aligned_frames_list[0])
+			# image = CorrelationMapDisplayer.get_correlation_map(x, y, aligned_frames_list[0])
+			#return(image)
+			#print("Well Fuck")
 
 			# Do temporal filters, apply and calculate dff
 			# each filter band
@@ -165,34 +184,40 @@ class SpyreTest(server.App):
 				frames=fj.cheby_filter(frames, f_low, f_high, frame_rate)
 				frames+=avg_frames
 				frames=fj.calculate_df_f0(frames)
+				preprocessed_frames_list.append(frames)
 				#do gsr
-				if 'gsr' in params['gsr_check']:
-					frames=fj.gsr(frames,width,height)
-					preprocessed_frames_list.append(frames)
-				else:
-					preprocessed_frames_list.append(frames)
+				# if 'gsr' in params['gsr_check']:
+				# 	frames=fj.gsr(frames,width,height)
+				# 	preprocessed_frames_list.append(frames)
+				# else:
+				# 	preprocessed_frames_list.append(frames)
 
 			preprocessed_frames = preprocessed_frames_list[0]
 			global preprocessed_frames
-			# output selected map
-			if choose_map == 'spc_map':
-				print('x = '+str(x))
-				print('y = '+ str(y))
-				CorrelationMapDisplayer = fj.CorrelationMapDisplayer(preprocessed_frames)
-				image = CorrelationMapDisplayer.get_correlation_map(x, y, preprocessed_frames)
-			else:
-				image = fj.standard_deviation(preprocessed_frames)
-			return image
+
+		#do gsr
+		if 'gsr' in params['gsr_check']:
+			preprocessed_frames=fj.gsr(preprocessed_frames,width,height)
+
+		# output selected map
+		if choose_map == 'spc_map':
+			print('x = '+str(x))
+			print('y = '+ str(y))
+			CorrelationMapDisplayer = fj.CorrelationMapDisplayer(preprocessed_frames)
+			image = CorrelationMapDisplayer.get_correlation_map(x, y, preprocessed_frames)
 		else:
-			# output selected map
-			if choose_map == 'spc_map':
-				print('x = '+str(x))
-				print('y = '+ str(y))
-				CorrelationMapDisplayer = fj.CorrelationMapDisplayer(preprocessed_frames)
-				image = CorrelationMapDisplayer.get_correlation_map(x, y, preprocessed_frames)
-			else:
-				image = fj.standard_deviation(preprocessed_frames)
-			return image
+			image = fj.standard_deviation(preprocessed_frames)
+		return image
+		# else:
+		# 	# output selected map
+		# 	if choose_map == 'spc_map':
+		# 		print('x = '+str(x))
+		# 		print('y = '+ str(y))
+		# 		CorrelationMapDisplayer = fj.CorrelationMapDisplayer(preprocessed_frames)
+		# 		image = CorrelationMapDisplayer.get_correlation_map(x, y, preprocessed_frames)
+		# 	else:
+		# 		image = fj.standard_deviation(preprocessed_frames)
+		# 	return image
 
 if __name__ == '__main__':
 	app = SpyreTest()
