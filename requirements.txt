@@ -3,4 +3,3 @@ scipy
 matplotlib
 parmap
 DataSpyre
-image_registration
