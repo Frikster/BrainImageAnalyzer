@@ -4,7 +4,7 @@ import os
 import numpy as np
 import matplotlib.pyplot as plt
 import parmap
-#import image_registration
+import image_registration
 
 '''
 base_dir = ["/Volumes/My Passport/DataFB_Backup/AutoHeadFix_Data/0730/EL_LRL_fluc/",
