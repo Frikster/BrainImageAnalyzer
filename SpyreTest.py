@@ -21,6 +21,7 @@ import displacement_jeff as dj
 import os
 #import glob
 import numpy as np
+import scipy.stats as ss
 
 width = 256
 height = 256
@@ -139,7 +140,7 @@ class SpyreTest(server.App):
                {"type":"table",
 				"id":"table_id",
 				"control_id":"render_button",
-				"tab":"Images"}]
+				"tab":"Table"}]
 
     # controls = [{"type":"hidden",
     #  			"id":"render",
@@ -148,6 +149,7 @@ class SpyreTest(server.App):
     def getImage(self,params):
         print("getImage entered")
         choose_map = params['choose_map']
+        preprocessed_frames_dict = {}
 
         if choose_map == 'spc_map':
             # Retrieve list of all x,y values for what was ticked
@@ -259,21 +261,20 @@ class SpyreTest(server.App):
                 print('y = '+ str(y))
                 CorrelationMapDisplayer = fj.CorrelationMapDisplayer(preprocessed_frames)
                 image = CorrelationMapDisplayer.get_correlation_map(y, x, preprocessed_frames)
+                preprocessed_frames_dict[region] = preprocessed_frames
                 images[region] = image
             else:
                 image = fj.standard_deviation(preprocessed_frames)
                 images[region] = image
 
         # You have a dictionary of all the images. Concatenate them vertically in a logical order
+        global preprocessed_frames_dict
         images_list = []
         for image_and_key in images.items():
             print(image_and_key[0])
             images_list = images_list + [image_and_key[1]]
 
-
         combined_image = np.vstack(images_list)
-
-
         return combined_image
 		# else:
 		# 	# output selected map
@@ -285,6 +286,36 @@ class SpyreTest(server.App):
 		# 	else:
 		# 		image = fj.standard_deviation(preprocessed_frames)
 		# 	return image
+
+    # Plot connectivity matrix
+    def getData(self, params):
+        print("getData entered")
+        # retrieve pixels across all frames at the seed along with nearby pixels
+        # average each to colapse into a one dimensional array - place in a dictionary
+        single_arrays = {}
+        for frames_and_key in preprocessed_frames_dict.items():
+            key = frames_and_key[0]
+            frames = frames_and_key[1]
+            coords = [param for param in params.items() if key in param[0]]
+            assert(len(coords) == 2)
+            if 'x' in coords[0][0]:
+                x = int(coords[0][1])
+                y = int(coords[1][1])
+            else:
+                x = int(coords[1][1])
+                y = int(coords[0][1])
+
+            # Retrieve all frames at a region around the seed pixel and add to dictionary
+            region_frames = frames[:,y-1:y+2,x-1:x+2]
+            avg_region_frames = map(np.average,region_frames)
+            single_arrays[key] = avg_region_frames
+
+        # now, correlate each value in single_arrays with each other one
+        # TODO:
+        ss.pearonr()
+
+
+
 
 if __name__ == '__main__':
 	app = SpyreTest()
