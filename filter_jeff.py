@@ -7,6 +7,9 @@ from scipy import ndimage
 #import multiprocessing
 import parmap
 #import image_registration
+from PIL import Image
+
+from libtiff import TIFF
 
 #M1312000377_1438367187.563086.raw
 #processed_data/Concatenated Stacks.raw
@@ -18,14 +21,71 @@ import parmap
 
 #save_dir = "/media/user/DataFB/AutoHeadFix_Data/0731/EL_LRL/"
 
-width = 256
-height = 256
+#todo: These are evil globals
+width = 128
+height = 128
 #frame_rate = 30.0
 #frame_size = width * height * 3
 
 starting_frame = 100
 
 def get_frames(rgb_file,width,height):
+
+    if(rgb_file.endswith(".tif")):
+        ########
+        # Cat method
+        img = Image.open(rgb_file)
+
+        counter=0
+        # if True:
+        #     while True:
+        #         try:
+        #             img.seek(counter)
+        #         except EOFError:
+        #             break
+        #         counter+=1
+        #         print counter
+
+        #Default pic sizes
+        n_pixels = 128
+
+        # Initialize 3D image array
+        n_frames = counter
+        n_frames = 20000
+
+        images_raw = np.zeros((n_frames, n_pixels, n_pixels), dtype = np.float64)
+
+        print "n_frames: ", n_frames
+        for i in range(0, n_frames,1):
+            img.seek(i)
+            #print "Loading frame: ", i
+            #images_raw [i] = np.flipud(np.fliplr(np.float16(img))) #FLIP IMAGES FOR Experiments Nov and Dec 2015
+            images_raw [i] = np.float64(img) #2016-1-11 2016-1-14 experiment no flipping needed
+        imarray = images_raw
+
+        ######
+        # # plt method
+        # I = plt.imread(rgb_file)
+        #
+        # #tifflib method
+        # # to open a tiff file for reading:
+        # tif = TIFF.open(rgb_file, mode='r')
+        # # to read an image in the currect TIFF directory and return it as numpy array:
+        # image = tif.read_image()
+        # # to read all images in a TIFF file:
+        # for image in tif.iter_images(): # do stuff with image
+        #     image = tif.read_image()
+        #
+        # # to open a tiff file for writing:
+        # tif = TIFF.open('filename.tif', mode='w')
+        # #to write a image to tiff file
+        # tif.write_image(image)
+        #
+        # #PIL method
+        # im = Image.open(rgb_file)
+        # imarray = np.array(im)
+        return imarray
+
     frame_size = width * height * 3
     with open(rgb_file, "rb") as file:
         frames = np.fromfile(file, dtype=np.uint8)
@@ -179,8 +239,10 @@ class CorrelationMapDisplayer:
         self.fig = plt.figure()
         self.ax = self.fig.add_subplot(111)
         # calculate initial map at center pixel
+        print (frames.shape[0]/2)
         print(frames.shape[1]/2)
-        print (frames.shape[1]/2)
+        print (frames.shape[2]/2)
+        # TODO: Is it correct for the indices to be [0] and [1] Jeff (answer is no I think)
         self.image = self.get_correlation_map(frames.shape[1]/2, frames.shape[2]/2, frames)
         self.imgplot = self.ax.imshow(self.image) 
         self.canvas = self.fig.canvas
